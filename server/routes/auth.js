@@ -1,18 +1,13 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs")
-const UserData = require("../models/User");
+const express =require("express");
+const { signup, signin, googleAuth } =require("../controllers/auth.js");
 
-const signup = async (req, res, next) => {
-  try {
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(req.body.password, salt);
-    const newUser = new UserData({ ...req.body, password: hash });
+const router = express.Router();
 
-    await newUser.save();
-    res.status(200).send("User has been created!");
-  } catch (err) {
-    next(err);
-  }
-};
+//CREATE A USER
+router.post("/signup", signup)
 
-module.exports = signup
+router.post("/signin", signin)
+
+router.post("/google", googleAuth)
+module.exports = router;
+
