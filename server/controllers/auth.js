@@ -1,33 +1,33 @@
-const mongoose = require("mongoose");
+const User = require('../models/User');
 const bcrypt = require("bcryptjs");
+const { createError } = require("../error.js");
 const jwt = require("jsonwebtoken");
-const UserData = require("../models/User");
-const createError = require("../error");
+ 
 const signup = async (req, res, next) => {
   try {
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
-    const newUser = new UserData({ ...req.body, password: hash });
-
+    const newUser = new User({ ...req.body, password: hash });
+    console.log(newUser)
     await newUser.save();
     res.status(200).send("User has been created!");
   } catch (err) {
     next(err);
   }
 };
-
+ 
 const signin = async (req, res, next) => {
   try {
-    const user = await UserData.findOne({ name: req.body.name });
+const user = await User.findOne({ name: req.body.name });
     if (!user) return next(createError(404, "User not found!"));
-
+ 
     const isCorrect = await bcrypt.compare(req.body.password, user.password);
-
+ 
     if (!isCorrect) return next(createError(400, "Wrong Credentials!"));
-
+ 
     const token = jwt.sign({ id: user._id }, process.env.JWT);
     const { password, ...others } = user._doc;
-
+ 
     res
       .cookie("access_token", token, {
         httpOnly: true,
@@ -38,10 +38,10 @@ const signin = async (req, res, next) => {
     next(err);
   }
 };
-
+ 
 const googleAuth = async (req, res, next) => {
   try {
-    const user = await UserData.findOne({ email: req.body.email });
+const user = await User.findOne({ email: req.body.email });
     if (user) {
       const token = jwt.sign({ id: user._id }, process.env.JWT);
       res
@@ -51,7 +51,7 @@ const googleAuth = async (req, res, next) => {
         .status(200)
         .json(user._doc);
     } else {
-      const newUser = new UserData({
+      const newUser = new User({
         ...req.body,
         fromGoogle: true,
       });
@@ -69,4 +69,4 @@ const googleAuth = async (req, res, next) => {
   }
 };
 
-module.exports = { signup, signin , googleAuth}
+module.exports = {signin, signup, googleAuth }

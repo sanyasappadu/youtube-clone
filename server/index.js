@@ -1,28 +1,47 @@
-const express = require("express")
-const dotenv = require("dotenv")
-const authRouter = require("./routes/auth");
-const { mongoose } = require("mongoose");
+const express = require("express");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const userRoutes = require("./routes/users.js");
+const videoRoutes = require("./routes/videos.js");
+const commentRoutes = require("./routes/comments.js");
+const authRoutes = require("./routes/auth.js");
+const cookieParser = require("cookie-parser");
+ 
+ 
 const app = express();
 dotenv.config();
-const port = process.env.PORT || 8000;
-
-app.use(express.json());
-app.use("/api/auth", authRouter);
-
-const connectToDB = () => {
-  mongoose.connect(process.env.MONGO).then(() => {
-    console.log("connected to db")
-  }).catch((err) => {
-    throw err;
-  });
+ 
+const connect = () => {
+  mongoose
+    .connect(process.env.MONGO)
+    .then(() => {
+      console.log("Connected to DB");
+    })
+    .catch((err) => {
+      throw err;
+    });
 };
-app.get("/", (req, res) => {
-  res.send("Hello World")
-  console.log("Hello World")
-  }
-)
+ 
+//middlewares
+app.use(cookieParser())
+app.use(express.json());
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/videos", videoRoutes);
+app.use("/api/comments", commentRoutes);
+ 
+//error handler
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  const message = err.message || "Something went wrong!";
+  return res.status(status).json({
+    success: false,
+    status,
+    message,
+  });
+});
 
-app.listen(port, () => {
-  connectToDB();
-  console.log(`Connected to Server ${port}`);
+app.listen(8800, () => {
+  connect();
+  console.log("Connected to Server");
 });
